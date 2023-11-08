@@ -8,5 +8,9 @@
     "start": "node src/index.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "undici": "^5.27.2"
+  }
 }
