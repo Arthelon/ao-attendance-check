@@ -1,9 +1,12 @@
 const { program } = require("commander");
+const fs = require("fs");
 const {
   getGuildId,
   getPlayerActivityStats,
   getGuildPlayers,
 } = require("./api");
+const { stringify } = require("csv-stringify");
+const { generate } = require("csv-generate");
 
 program
   .description(
@@ -25,7 +28,7 @@ program
     "Players with an attendance count equal to or below this threshold will appear on the list",
     4
   )
-  .option("--csv-output", "Outputs CSV file");
+  .option("--csv-output", "Outputs CSV file to 'attendance.csv'");
 
 function exitError(error, message) {
   error && console.log(error);
@@ -42,6 +45,23 @@ function validateOptions(opts) {
       exitError(null, "Invalid CLI options");
     }
   }
+}
+
+function output(attendanceList, outputCsv) {
+  let outStream = outputCsv
+    ? fs.createWriteStream("./attendance.csv")
+    : process.stdout;
+
+  console.log(
+    `Number of inactive/low-attendance players: ${attendanceList.length}`
+  );
+  generate({
+    length: attendanceList.length,
+    objectMode: true,
+    columns: 2,
+  })
+    .pipe(stringify(attendanceList))
+    .pipe(outStream);
 }
 
 async function main() {
@@ -105,10 +125,7 @@ async function main() {
   const combinedActivityList = inactivePlayerList.concat(
     filteredPlayerActivity
   );
-  console.log(JSON.stringify(combinedActivityList));
-  console.log(
-    `Number of inactive/low-attendance players: ${combinedActivityList.length}`
-  );
+  output(combinedActivityList, options.csvOutput);
 }
 
 main();
