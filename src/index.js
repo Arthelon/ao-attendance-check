@@ -11,30 +11,37 @@ program
   )
   .argument("guild-name", "Name of guild")
   .option(
-    "--min-players",
+    "--min-players <count>",
     "Minimum players in battle for attendance to count",
     30
   )
   .option(
-    "--range",
+    "--range <days>",
     "Period of time before current time to perform attendance check",
     7
   )
   .option(
-    "attendance-count",
-    "Players with an attendance count below this threshold will appear on the list",
-    5
+    "--attendance-count <count>",
+    "Players with an attendance count equal to or below this threshold will appear on the list",
+    4
   )
   .option("--csv-output", "Outputs CSV file");
 
 function exitError(error, message) {
-  console.log(error);
+  error && console.log(error);
   console.log(message);
   process.exit(1);
 }
 
-function validateOptions(options) {
-  console.log(options);
+function validateOptions(opts) {
+  opts.minPlayers = Number(opts.minPlayers);
+  opts.range = Number(opts.range);
+  opts.attendanceCount = Number(opts.attendanceCount);
+  for (option of Object.values(opts)) {
+    if (Number.isNaN(option) || option < 0) {
+      exitError(null, "Invalid CLI options");
+    }
+  }
 }
 
 async function main() {
@@ -44,12 +51,19 @@ async function main() {
   const options = program.opts();
   validateOptions(options);
 
-  // Main business logic
+  // Network requests
   let guildId;
   try {
     guildId = await getGuildId(guildName);
   } catch (err) {
     exitError(err, `Unable to retrieve guild name: ${guildName}`);
+  }
+
+  let playerList;
+  try {
+    playerList = await getGuildPlayers(guildId);
+  } catch (err) {
+    exitError("Unable to retrieve list of guild players");
   }
 
   let playerActivity;
@@ -62,31 +76,39 @@ async function main() {
   } catch (err) {
     exitError(err, "Unable to retrieve guild player activity stats");
   }
+
+  // Filtering and final output
+  const playerListMapping = playerList.reduce((mapping, curr) => {
+    mapping[curr.Name] = curr;
+    return mapping;
+  }, {});
+  const playerActivityMapping = playerActivity.reduce((mapping, curr) => {
+    mapping[curr.name] = curr;
+    return mapping;
+  }, {});
+
+  // Only includes players with ZvZ activity
   const filteredPlayerActivity = playerActivity
-    .filter((player) => player.attendance < options.attendanceCount)
+    .filter(
+      (player) =>
+        player.attendance <= options.attendanceCount &&
+        playerListMapping.hasOwnProperty(player.name) // exclude name from list if no longer in guild
+    )
     .sort((a, b) => {
       return a.attendance > b.attendance ? 1 : -1;
     })
     .map((player) => [player.name, player.attendance]);
 
-  let playerList;
-  try {
-    playerList = await getGuildPlayers(guildId);
-  } catch (err) {
-    exitError("Unable to retrieve list of guild players");
-  }
-  const playerActivityMapping = playerActivity.reduce((mapping, curr) => {
-    mapping[curr.name] = curr;
-    return mapping;
-  }, {});
-  const inactivePlayerList = playerList
+  const inactivePlayerList = playerList // players with 0 activity
     .filter((player) => !playerActivityMapping.hasOwnProperty(player.Name))
     .map((player) => [player.Name, 0]);
-
   const combinedActivityList = inactivePlayerList.concat(
     filteredPlayerActivity
   );
-  console.log(combinedActivityList);
+  console.log(JSON.stringify(combinedActivityList));
+  console.log(
+    `Number of inactive/low-attendance players: ${combinedActivityList.length}`
+  );
 }
 
 main();
