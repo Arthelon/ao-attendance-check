@@ -14,7 +14,7 @@ npm run start
 ````
 guild-name
 --min-players (default: 30)
---period (default: 7 days)
+--range (default: week)
 --attendance-count (default: 5)
 --csv-output (default: false)
 ```
