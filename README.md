@@ -4,9 +4,12 @@ Script by @arthelon for ZvZ attendance checking
 
 ## Installation
 
+- Prereqs: NodeJS (v18+)
+
 ```
+git clone https://github.com/Arthelon/ao-attendance-check
+cd ao-attendance-check
 npm install
-npm run start
 ```
 
 ## Usage
@@ -31,5 +34,5 @@ Options:
 ## Usage Examples
 
 ```
-npm start Superiore -- min-players 10 --csv-output
+npm start Superiore -- --min-players 10 --csv-output
 ```
