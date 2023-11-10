@@ -53,9 +53,6 @@ function output(attendanceList, outputCsv) {
     ? fs.createWriteStream("./attendance.csv")
     : process.stdout;
 
-  console.log(
-    `Number of inactive/low-attendance players: ${attendanceList.length}`
-  );
   generate({
     length: attendanceList.length,
     objectMode: true,
@@ -125,6 +122,9 @@ async function main() {
     .map((player) => [player.Name, 0]);
   const combinedActivityList = inactivePlayerList.concat(
     filteredPlayerActivity
+  );
+  console.log(
+    `Number of players in ${guildName} with attendance <=${options.attendanceCount} from ${options.range} days ago to now (min players in battle: ${options.minPlayers}): ${combinedActivityList.length}`
   );
   output(combinedActivityList, options.csvOutput);
 }
