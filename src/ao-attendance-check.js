@@ -17,7 +17,7 @@ program
   .option(
     "--min-players <count>",
     "Minimum players in battle for attendance to count",
-    30
+    40
   )
   .option(
     "--range <days>",
@@ -86,9 +86,17 @@ async function main() {
 
   let playerActivity;
   try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - options.range);
+    const formattedStartDate = `${startDate.getFullYear()}-${
+      startDate.getMonth() + 1
+    }-${startDate.getDate()}`;
+    console.log(
+      `Searching for player battle attendance starting from ${formattedStartDate}`
+    );
     playerActivity = await getPlayerActivityStats(
       guildId,
-      options.range,
+      formattedStartDate,
       options.minPlayers
     );
   } catch (err) {

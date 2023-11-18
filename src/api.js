@@ -2,12 +2,10 @@ const undici = require("undici");
 const BASE_API_URL = "https://gameinfo.albiononline.com/api/gameinfo";
 const ALBION_BB_URL = "https://api.albionbb.com";
 
-const getPlayerActivityStats = async (guildId, daysRange, minPlayers) => {
+const getPlayerActivityStats = async (guildId, startDate, minPlayers) => {
   const url = new URL(`${ALBION_BB_URL}/stats/guilds/${guildId}`);
   url.searchParams.append("minPlayers", minPlayers);
-  const offsetDate = new Date(new Date() - daysRange * 86400);
-  const formattedOffsetDate = `${offsetDate.getFullYear()}-${offsetDate.getMonth()}-${offsetDate.getDate()}`;
-  url.searchParams.append("start", formattedOffsetDate);
+  url.searchParams.append("start", startDate);
 
   const { body } = await undici.request(url);
   const bodyParsed = await body.json();
